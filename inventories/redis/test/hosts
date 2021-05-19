@@ -1,0 +1,23 @@
+redis-master1-test ansible_host=10.0.0.45 ansible_user=ansible ip=10.0.0.45
+redis-slave1-test  ansible_host=10.0.0.46 ansible_user=ansible ip=10.0.0.46
+redis-slave2-test  ansible_host=10.0.0.47 ansible_user=ansible ip=10.0.0.47
+sentinel-01-test   ansible_host=10.0.0.48 ansible_user=ansible ip=10.0.0.48
+sentinel-02-test   ansible_host=10.0.0.49 ansible_user=ansible ip=10.0.0.49
+sentinel-03-test   ansible_host=10.0.0.50 ansible_user=ansible ip=10.0.0.50
+
+[master]
+redis-master1-test
+
+[slave]
+redis-slave1-test
+redis-slave2-test
+
+[sentinel]
+sentinel-01-test
+sentinel-02-test
+sentinel-03-test
+
+[redis-cluster:children]
+master
+slave
+sentinel

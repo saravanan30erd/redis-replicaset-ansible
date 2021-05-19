@@ -1,0 +1,98 @@
+---
+# tasks to install and configure the Redis Sentinel
+- hostname:
+    name: "{{ inventory_hostname }}"
+    
+- name: sentinel_install | Populate the /etc/hosts
+  import_tasks: etchosts.yml
+
+- name: sentinel_install | Disable the selinux
+  selinux:
+    state: disabled
+
+- name: sentinel_install | Install the dependencies
+  yum:
+    name: "@Development tools"
+    state: present
+
+## Tunings
+
+- name: sentinel_install | create the redis user
+  user:
+    name: redis
+    shell: /usr/sbin/nologin
+
+- name: sentinel_install | Create directory
+  file:
+    path: /opt/redis
+    state: directory
+
+- name: sentinel_install | Download the redis stable version
+  local_action:
+    module: get_url
+    url: http://download.redis.io/releases/redis-{{ redis_version }}.tar.gz
+    dest: /tmp/redis-{{ redis_version }}.tar.gz
+
+- name: sentinel_install | copy the redis pkg to remote server
+  copy:
+    src: /tmp/redis-{{ redis_version }}.tar.gz
+    dest: /opt/redis/redis-{{ redis_version }}.tar.gz
+  register: redisdownload
+
+- name: sentinel_install | Extract the Redis source code
+  command: chdir=/opt/redis tar -xvf redis-{{ redis_version }}.tar.gz
+  when: redisdownload.changed
+
+- name: sentinel_install | Install the redis
+  command: chdir=/opt/redis/redis-{{ redis_version }}/ make install
+  when: redisdownload.changed
+
+- name: sentinel_install | create redis conf directory
+  file:
+    path: /etc/redis
+    state: directory
+
+- name: sentinel_install | Copy the redis conf file
+  template:
+    src: redis-sentinel.conf.j2
+    dest: /etc/redis/redis-sentinel.conf
+    mode: 0644
+    owner: redis
+    group: redis
+  notify: restart redis-sentinel
+
+- name: sentinel_install | create the redis data directory
+  file:
+    path: /var/lib/redis
+    state: directory
+    owner: redis
+    group: redis
+
+- name: sentinel_install | create the redis log directory
+  file:
+    path: /var/log/redis
+    state: directory
+    owner: redis
+    group: redis
+
+- name: sentinel_install | create the redis log file
+  file:
+    path: /var/log/redis/sentinel.log
+    state: touch
+    owner: redis
+    group: redis
+    mode: 0644
+  when: redisdownload.changed
+
+- name: sentinel_install | Copy systemd file for redis
+  template:
+    src: redis-sentinel.service
+    dest: /etc/systemd/system/redis-sentinel.service
+  notify: restart redis-sentinel
+
+- name: sentinel_install | enable and start the redis
+  systemd:
+    name: redis-sentinel
+    daemon_reload: yes
+    enabled: yes
+    state: started

@@ -1,0 +1,10 @@
+# sentinel config
+bind {{ hostvars[inventory_hostname]['ip'] }}
+port {{ redis_sentinel_port }}
+dir /var/lib/redis
+sentinel monitor {{ redis_cluster_name }} {{ redis_master_node }} {{ redis_port }} {{ sentinel_quorum }}
+sentinel down-after-milliseconds {{ redis_cluster_name }} 3000
+sentinel parallel-syncs {{ redis_cluster_name }} 1
+sentinel failover-timeout {{ redis_cluster_name }} 60000
+sentinel auth-pass {{ redis_cluster_name }} {{ redis_password }}
+logfile /var/log/redis/sentinel.log

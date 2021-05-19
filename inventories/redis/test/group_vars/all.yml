@@ -1,0 +1,21 @@
+##### Redis #####
+dns_domain: example.com
+
+# redis version
+redis_version: 4.0.11
+
+# Authentication
+redis_password: XXXXXX
+
+# Ports
+redis_port: 6379
+redis_sentinel_port: 26379
+
+# Redis cluster details
+redis_cluster_name: test
+
+# Minimum slaves needed to be online for write to master
+minimum_slaves: 1
+
+# Set Quorum value for redis sentinel
+sentinel_quorum: 2

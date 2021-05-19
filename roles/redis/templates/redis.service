@@ -1,0 +1,13 @@
+[Unit]
+Description=Redis persistent key-value database
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/redis-server /etc/redis/redis.conf
+ExecStop=/usr/local/bin/redis-cli -h {{ hostvars[inventory_hostname]['ip'] }} shutdown
+User=redis
+Group=redis
+LimitNOFILE=10240
+
+[Install]
+WantedBy=multi-user.target

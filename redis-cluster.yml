@@ -1,0 +1,18 @@
+---
+- hosts: master
+  gather_facts: false
+  any_errors_fatal: "{{ any_errors_fatal | default(true) }}"
+  roles:
+    - { role: redis, redis_role: master }
+
+- hosts: slave
+  gather_facts: false
+  any_errors_fatal: "{{ any_errors_fatal | default(true) }}"
+  roles:
+    - { role: redis, redis_role: slave }
+
+- hosts: sentinel
+  gather_facts: false
+  any_errors_fatal: "{{ any_errors_fatal | default(true) }}"
+  roles:
+    - { role: redis-sentinel }

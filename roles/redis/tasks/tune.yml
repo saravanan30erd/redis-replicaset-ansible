@@ -1,0 +1,29 @@
+---
+- name: Set maxcon to 65535 in sysctl.conf
+  sysctl:
+    name: net.core.somaxconn
+    value: 65535
+    state: present
+
+- name: Set open files limit in sysctl.conf
+  sysctl:
+    name: fs.file-max
+    value: 10240
+    state: present
+
+- name: Set nofile limits for the user redis
+  pam_limits:
+    domain: redis
+    limit_type: '-'
+    limit_item: nofile
+    value: unlimited
+
+- name: Disable Transparent Huge Pages until reboot
+  shell: echo never > /sys/kernel/mm/transparent_hugepage/enabled && echo never > /sys/kernel/mm/transparent_hugepage/defrag
+  ignore_errors: true
+
+- name: Disable Transparent Huge Pages permanently
+  copy:
+    src: rc.local
+    dest: /etc/rc.local
+    mode: 0644

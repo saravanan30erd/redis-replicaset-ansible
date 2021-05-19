@@ -1,0 +1,13 @@
+[Unit]
+Description=Redis Sentinel
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/redis-sentinel /etc/redis/redis-sentinel.conf --daemonize no
+ExecStop=/usr/local/bin/redis-cli -h {{ hostvars[inventory_hostname]['ip'] }} -p {{ redis_sentinel_port }} shutdown
+User=redis
+Group=redis
+LimitNOFILE=10240
+
+[Install]
+WantedBy=multi-user.target

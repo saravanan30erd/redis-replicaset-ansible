@@ -1,0 +1,99 @@
+---
+# tasks to install and configure the Redis
+- hostname:
+    name: "{{ inventory_hostname }}"
+    
+- name: redis_install | Populate the /etc/hosts
+  import_tasks: etchosts.yml
+
+- name: redis_install | Disable the selinux
+  selinux:
+    state: disabled
+
+- name: redis_install | Install the dependencies
+  yum:
+    name: "@Development tools"
+    state: present
+
+- name: redis_install | Tune the system settings
+  import_tasks: tune.yml
+
+- name: redis_install | create the redis user
+  user:
+    name: redis
+    shell: /usr/sbin/nologin
+
+- name: redis_install | Create directory
+  file:
+    path: /opt/redis
+    state: directory
+
+- name: redis_install | Download the redis stable version
+  local_action:
+    module: get_url
+    url: http://download.redis.io/releases/redis-{{ redis_version }}.tar.gz
+    dest: /tmp/redis-{{ redis_version }}.tar.gz
+
+- name: redis_install | copy the redis pkg to remote server
+  copy:
+    src: /tmp/redis-{{ redis_version }}.tar.gz
+    dest: /opt/redis/redis-{{ redis_version }}.tar.gz
+  register: redisdownload
+
+- name: redis_install | Extract the Redis source code
+  command: chdir=/opt/redis tar -xvf redis-{{ redis_version }}.tar.gz
+  when: redisdownload.changed
+
+- name: redis_install | Install the redis
+  command: chdir=/opt/redis/redis-{{ redis_version }}/ make install
+  when: redisdownload.changed
+
+- name: redis_install | create redis conf directory
+  file:
+    path: /etc/redis
+    state: directory
+
+- name: redis_install | Copy the redis conf file
+  template:
+    src: redis.{{ redis_role }}.conf.j2
+    dest: /etc/redis/redis.conf
+    mode: 0644
+    owner: redis
+    group: redis
+  notify: restart redis
+
+- name: redis_install | create the redis data directory
+  file:
+    path: /var/lib/redis
+    state: directory
+    owner: redis
+    group: redis
+
+- name: redis_install | create the redis log directory
+  file:
+    path: /var/log/redis
+    state: directory
+    owner: redis
+    group: redis
+
+- name: redis_install | create the redis log file
+  file:
+    path: /var/log/redis/redis-server.log
+    state: touch
+    owner: redis
+    group: redis
+    mode: 0644
+  when: redisdownload.changed
+
+- name: redis_install | Copy systemd file for redis
+  template:
+    src: redis.service
+    dest: /etc/systemd/system/redis.service
+  notify: restart redis
+
+- name: redis_install | enable and start the redis
+  systemd:
+    name: redis
+    daemon_reload: yes
+    enabled: yes
+    state: started

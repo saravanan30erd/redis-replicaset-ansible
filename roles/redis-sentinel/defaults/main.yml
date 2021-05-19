@@ -1,0 +1,7 @@
+# All inventory hostnames will be written into each /etc/hosts file.
+populate_inventory_to_hosts_file: true
+
+redis_master_node: |-
+        {% for item in groups['master'] -%}
+          {{ hostvars[item]['ip'] }}
+        {%- endfor %}
